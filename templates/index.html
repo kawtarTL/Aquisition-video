@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Video Stream</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <style>
+        body {
+            background-color: #f4f4f9;
+            color: #333;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: #1a202c;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.9rem;
+            color: #718096;
+            margin-bottom: 5px;
+        }
+
+        input, select, button {
+            font-size: 1rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #2d89ef;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #2563eb;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 5px;
+            background: #f7fafc;
+            margin-bottom: 15px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .card {
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #f9fafb;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        #video-feed {
+            width: 100%;
+            max-width: 640px;
+            margin: 20px auto;
+            display: block;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Video Acquisition</h1>
+
+        <div>
+            <label for="source">Select Video Source:</label>
+            <select id="source" name="source" onchange="showForm()">
+                <option value="" selected disabled>Choose an option</option>
+                <option value="camera">Camera</option>
+                <option value="stream">Stream</option>
+                <option value="file">File</option>
+            </select>
+        </div>
+
+        <div id="camera-form" class="card hidden">
+            <h2>Camera Options</h2>
+            <form method="POST">
+                {% if camera_active %}
+                    <button type="submit" name="action" value="stop_camera" class="btn">Stop Camera</button>
+                {% else %}
+                    <button type="submit" name="action" value="start_camera" class="btn">Start Camera</button>
+                {% endif %}
+            </form>
+ 
+            {% if video_source == 'camera' %}
+            <h2>Live Video Stream</h2>
+            <img src="{{ url_for('video_feed') }}" alt="Camera Stream" id="video-feed">
+        {% endif %}
+        
+</div>
+    <!-- Stream Options -->
+    <div id="stream-form" class="card hidden">
+        <h2>Stream Options</h2>
+        <form method="POST">
+            <label for="video_url">Enter Stream URL:</label>
+            <input type="text" id="video_url" name="video_url" placeholder="Enter Stream URL" value="{{ video_url or '' }}">
+
+            {% if stream_active %}
+                <button type="submit" name="action" value="stop_stream" class="btn">Stop Stream</button>
+            {% else %}
+                <button type="submit" name="action" value="start_stream" class="btn">Start Stream</button>
+            {% endif %}
+        </form>
+
+    <!-- Display Stream Live if Stream is Active -->
+    {% if video_source == 'stream' %}
+    <h2>Live Video Stream</h2>
+    <img src="{{ url_for('video_feed') }}" alt="Stream Video" id="video-feed">
+    {% endif %}
+</div>
+      <!-- File Form -->
+<div id="file-form" class="card hidden">
+    <h2>File Options</h2>
+    <form method="POST" enctype="multipart/form-data">
+        <label for="file">Choose a video file to upload:</label>
+        <input type="file" id="file" name="file" accept="video/*">
+        <button type="submit" name="action" value="start_file" class="btn">Upload Video</button>
+    </form>
+</div>
+
+        <div id="recorded-videos" class="card">
+            <h2>Recorded Videos</h2>
+            <ul>
+                {% for video in recorded_videos %}
+                    <li>
+                        <a href="{{ url_for('static', filename='videos/' + video) }}" target="_blank">{{ video }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function showForm() {
+            // Hide all forms initially
+            document.getElementById('camera-form').classList.add('hidden');
+            document.getElementById('stream-form').classList.add('hidden');
+            document.getElementById('file-form').classList.add('hidden');
+
+            const source = document.getElementById('source').value;
+            if (source === 'camera') {
+                document.getElementById('camera-form').classList.remove('hidden');
+            } else if (source === 'stream') {
+                document.getElementById('stream-form').classList.remove('hidden');
+            } else if (source === 'file') {
+                document.getElementById('file-form').classList.remove('hidden');
+            }
+        }
+        function startCamera() {
+    // Masquer le bouton "Start Camera"
+    document.getElementById('start-camera').classList.add('hidden');
+    // Afficher le bouton "Stop Camera"
+    document.getElementById('stop-camera').classList.remove('hidden');
+    // Ajouter ici toute logique pour démarrer la caméra
+    console.log("Camera started");
+}
+
+function stopCamera() {
+    // Masquer le bouton "Stop Camera"
+    document.getElementById('stop_stream').classList.add('hidden');
+    // Afficher le bouton "Start Camera"
+    document.getElementById('start_stream').classList.remove('hidden');
+    // Ajouter ici toute logique pour arrêter la caméra
+    console.log("Camera stopped");
+}
+function startStream() {
+    // Masquer le bouton "Start Camera"
+    document.getElementById('start_stream').classList.add('hidden');
+    // Masquer le bouton "Start Camera"
+    document.getElementById('video_url').classList.add('hidden');
+    // Afficher le bouton "Stop Camera"
+    document.getElementById('stop_stream').classList.remove('hidden');
+    // Ajouter ici toute logique pour démarrer la caméra
+    console.log("Stream started");
+}
+
+function stopStream() {
+    // Masquer le bouton "Stop Camera"
+    document.getElementById('stop-stream').classList.add('hidden');
+    // Afficher le bouton "Start Camera"
+    document.getElementById('start-stream').classList.remove('hidden');
+    // Ajouter ici toute logique pour arrêter la caméra
+    console.log("Stream stopped");
+}
+
+    </script>
+</body>
+</html>
